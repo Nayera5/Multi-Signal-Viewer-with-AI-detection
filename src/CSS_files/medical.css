@@ -1,0 +1,330 @@
+.medical {
+  background: linear-gradient(135deg, #0a0e13 0%, #1a1f2e 100%);
+  min-height: 100vh;
+  padding: 40px 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.medical::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(231, 144, 246, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(106, 193, 228, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.medical-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #c9d1d9;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 24px;
+  font-size: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 40px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateX(-5px);
+}
+
+.medical-header {
+  text-align: center;
+  margin-bottom: 60px;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+.header-icon {
+  color: #e790f6;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.medical-title {
+  font-size: 48px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #e790f6 0%, #6ac1e4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 15px;
+  letter-spacing: -1px;
+}
+
+.medical-subtitle {
+  font-size: 18px;
+  color: #8892b0;
+  font-weight: 300;
+}
+
+.medical-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.medical-signal-card {
+  background: linear-gradient(145deg, #161b22 0%, #0d1117 100%);
+  border-radius: 24px;
+  padding: 40px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.medical-signal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.medical-signal-card:hover::before {
+  opacity: 1;
+}
+
+.ecg-card {
+  border-color: #e790f6;
+}
+
+.ecg-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 25px 70px rgba(231, 144, 246, 0.4);
+  border-color: #e790f6;
+}
+
+.ecg-card .medical-card-icon {
+  color: #e790f6;
+}
+
+.eeg-card {
+  border-color: #6ac1e4;
+}
+
+.eeg-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 25px 70px rgba(106, 193, 228, 0.4);
+  border-color: #6ac1e4;
+}
+
+.eeg-card .medical-card-icon {
+  color: #6ac1e4;
+}
+
+.medical-card-icon {
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90px;
+  transition: transform 0.4s ease;
+}
+
+.medical-signal-card:hover .medical-card-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.medical-card-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.medical-card-description {
+  font-size: 16px;
+  color: #8892b0;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 25px;
+  min-height: 48px;
+}
+
+.medical-card-features {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.medical-feature-tag {
+  background: rgba(255, 255, 255, 0.05);
+  color: #c9d1d9;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.medical-signal-card:hover .medical-feature-tag {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.medical-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.medical-card-stats-single {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.medical-card-stats-single .stat-item {
+  min-width: 150px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.medical-signal-card:hover .stat-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #8892b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .medical-cards-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .medical-title {
+    font-size: 36px;
+  }
+
+  .medical-subtitle {
+    font-size: 16px;
+  }
+
+  .medical-signal-card {
+    padding: 30px 20px;
+  }
+
+  .medical-card-title {
+    font-size: 26px;
+  }
+
+  .medical-card-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keep old button styles for compatibility */
+button {
+  background-color: purple;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+}
