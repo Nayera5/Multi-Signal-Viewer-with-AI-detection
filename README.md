@@ -1,131 +1,141 @@
-
 <div align="center">
 
-# **Multi Signal Viewer with AI detection**
+# **Multi Signal Viewer with AI Detection and Adaptive Sampling**
 
 </div>
 
 > ## **Overview**
 
-An integrated web-based application for **multi-domain signal visualization and analysis**, supporting **medical**, **acoustic**, and **radiofrequency** signals.
-The viewer integrates multiple AI models and interactive visualization modes for real-time exploration, detection, and classification.
+The **Multi Signal Viewer** is an integrated web-based application for **multi-domain signal visualization, processing, and AI-assisted analysis**.
+It now includes a **unified adaptive sampling framework** applied across all supported domains — allowing users to control and analyze signal behavior under different sampling frequencies, while ensuring accuracy through built-in **anti-aliasing filters**.
+
+The system supports real-time exploration, AI detection, and classification for **🫀 Medical**, **🔊 Acoustic and Speech Signals Viewer**, and **📡 Radiofrequency** signals, with newly added support for **human speech signals** and adaptive preprocessing.
+
+## Downsampling control:
+
+Added a **downsampling feature** that lets the user change the sampling frequency of the displayed signal using a slider. The slider accepts any target sampling frequency **less than the original sampling rate**.
 
 ---
 
-## **Included Modules**
-
-#### 🫀 Medical Signals Viewer
-
-- Visualize multi or single-channel `ECG/EEG` signals and detect abnormalities using a pretrained `AI model`.
-
-#### 🔊 Acoustic Signals Viewer
-
-- Vehicle-Passing Doppler Effect: simulate car sounds with controllable `velocity (v)` and `frequency (f)`; estimate both using an AI model from real recordings.
-- Drone Detection: detect the presence of drones or submarines among background sounds using an AI classifier.
-
-#### 📡 Radiofrequency Signals Viewer
-
-- Visualize real `SAR` signals and estimate some features.
-
----
 ### 🏠 Home Page Preview
-
-Here’s how the main interface of the Signal Viewer looks:
 
 <img width="1876" height="860" alt="Screenshot 2025-10-11 022524" src="https://github.com/user-attachments/assets/1053632c-122e-443c-be33-453c36f16971" />
 
- 
-
 ---
 
-##  1) Medical Signals Viewer:
+# 1) Medical Signals Viewer
+
 ### Key features
-- Support for multi or single-channel ECG/EEG recordings.
 
-- Automatic abnormality detection.
-- Four viewer modes:
+* Support for multi or single-channel ECG/EEG recordings.
+* Automatic abnormality detection.
+* Real-time adaptive `downsampling` with visual and AI-based feedback.
+* pause and play the signal.
+* Four viewer modes:
 
-  - `Continuous-time viewer` — scrolling viewport with navigate, zoom, and pan controls.
-
-  - `XOR graph` — divide the signal into chunks and overlay them using XOR: identical chunks cancel out.
-
-  - `Polar graph`
-
-  - `Reoccurrence graph` — cumulative scatter plot of channel pairs (chx vs chy) to reveal recurring patterns.
----
-## ECG demo:
-https://github.com/user-attachments/assets/1f8cae3d-d468-4c2f-a2fd-790cdaea2af0
-
-### another abnormal signal: LVH 
-<img width="1891" height="879" alt="Screenshot 2025-10-11 173936" src="https://github.com/user-attachments/assets/a91ccbcb-f20a-4951-b42b-4d1be1d1d545" />
-
+  * `Continuous-time viewer`  |  `XOR graph`  |  `Polar graph`  |  `Reoccurrence graph` 
 ---
 
-## EEG demo:
-<img width="1882" height="913" alt="Screenshot 2025-10-11 173622" src="https://github.com/user-attachments/assets/072f3820-1d16-419d-a1d2-ca37d40e791b" />
-<img width="1893" height="883" alt="Screenshot 2025-10-11 173807" src="https://github.com/user-attachments/assets/2f7b88b4-fa0d-4197-af05-d06706c2e09f" />
+## **Behavior and UI**
+* When the user moves the slider, the viewer uses `scipy.signal` to automatically **resample** the signal to the selected frequency.
+    🔹*In simple terms:* this step removes the high-frequency parts of the signal and then reduces the number of samples so the new version looks the same but is smoother and slower.
+* The new signal is then used both for display and for processing.
+* A small readout next to the slider shows the current target sampling frequency and the original sampling frequency.
+
+## ECG
+https://github.com/user-attachments/assets/72720ea9-107b-4303-9d10-904569dfa5c2
+
+## EEG
+
+
+https://github.com/user-attachments/assets/abb05cc4-ef02-4806-8a70-7ce30fc265aa
 
 ---
-##  2) Acoustic Signals Viewer:
-### 🚗 Doppler Effect Detection
-- Uses spectrogram analysis (STFT) to track frequency changes over time and detect peaks:  
-  - fₐₚₚ → approaching frequency  
-  - fᵣₑc → receding frequency  
-- Estimates car speed in m/s or km/h using:  
-  v = c × (fₐₚₚ - fᵣₑc) / (fₐₚₚ + fᵣₑc)
+## Known issue: AI detection mismatch after downsampling
 
-  
+**Symptom:** After using the downsampling slider to reduce the displayed sampling frequency, running the integrated AI detection model sometimes produces an **incorrect / false result** (for example: an abnormal signal is labeled as "normal", misclassification of rhythm, or wrong event timing).
 
-https://github.com/user-attachments/assets/0c624394-fd13-47d5-a047-c15473fbe8d7
+**Observed effects**
 
+* Temporal features (peaks, QRS onset) may shift slightly due to filtering and resampling, affecting detectors that rely on precise timing.
+* Spectral features are altered (loss of high-frequency content) which can degrade classifiers trained on higher-bandwidth inputs.
 
----
+## ECG
+### after downsampling detects normal although the signal is for atrial fibrillation
+<img width="1907" height="876" alt="Screenshot 2025-10-26 205258" src="https://github.com/user-attachments/assets/86a2e8fd-0f50-40fb-916e-af62199ca164" />
 
-### 🚗 Doppler Car Sound Generator
-
-- This project simulates the Doppler effect by generating the sound of a car passing by with `velocity v` and `horn frequency f`.
-- The user can control both parameters, and a spectrogram is displayed to visualize the frequency shift as the car approaches and moves away.
-
-
-https://github.com/user-attachments/assets/821903a0-b514-41f8-a358-9ce49b9b1b24
-
+## EEG
+### after downsampling detects another type of disease
+<img width="1886" height="889" alt="Screenshot 2025-10-26 205725" src="https://github.com/user-attachments/assets/ea7f14a9-820b-494c-92e1-fe411055ef6d" />
 
 ---
 
-### Drone
+ 
+# 2) 🗣️ Speech Signals Viewer
+* Interactive human speech feature:
+  * allowing users to listen to voice recordings and use an AI classifier to detect whether the speaker is male or female.
+  * When users apply downsampling, the voice naturally changes — causes noticeable **aliasing and distortion** in high-frequency components such as `s` or `sh` sounds.
+  * To handle this, we introduced the **Speech Anti-Aliasing Model** 
 
-This module detects drones from `WAV audio files` using `YAMNet` for feature extraction and a custom classifier, it enables users to upload audio and view predictions
+Speech samples are played, then downsampled using a slider that controls the sampling rate. The audio before and after downsampling reveal how lowering the sampling frequency affects speech clarity and introduces noise, showing the impact of sampling rate on human voice perception.
 
 
-https://github.com/user-attachments/assets/6ac30b0b-c72d-4ced-aeac-317559399c1e
-
-
----
-## 3)SAR
-<img width="816" height="896" alt="Screenshot 2025-10-10 185152" src="https://github.com/user-attachments/assets/c3867432-e5c8-4bd2-95ee-56c904ab44f3" />
-
-<img width="812" height="507" alt="Screenshot 2025-10-10 185158" src="https://github.com/user-attachments/assets/eb6c8a3b-68f4-4104-b1d4-0e1266e8d606" />
-
+https://github.com/user-attachments/assets/e09a10ea-5f7f-4e27-a444-dc9f81b4cd9a
 
 ---
-   
+# 3) Acoustic Signals Viewer
+
+## 🚗 Car Sound Detection
+
+This part focuses on detecting the frequency and speed of car sounds. The audio signals are downsampled to observe how reducing the sampling rate affects the sound characteristics. The spectrogram and the audio playback are displayed before and after downsampling to visualize and hear the changes in frequency content and clarity.
+
+https://github.com/user-attachments/assets/4103c3a5-1a06-4a0e-9e3a-e31e8b3e8367
+
+---
+## 🚗 Car Sound Generation
+
+Car sounds are generated and played to demonstrate how downsampling impacts the quality of the audio. A slider is used to adjust the sampling rate, allowing users to notice how the sound becomes noisier or distorted at lower rates.
+
+
+https://github.com/user-attachments/assets/a07983a8-afff-48c0-88cc-ee5cef667ed5
+
+---
+## Drone Audio Classification
+This module uses an AI model to detect whether an audio input belongs to a drone or non-drone source.
+Users can upload or record a sound, and the system analyzes its acoustic features to predict the class in real time.
+
+### New feature: Downsampling control 
+An interactive downsampling slider allows users to reduce the sampling rate of the audio. When downsampling is applied, important high-frequency features of the drone sound are lost — causing the model to misclassify the sound as non-drone.
+
+https://github.com/user-attachments/assets/3cab414f-03bc-4bac-b10a-2f9b2a8e4bbf
+
+---
+## SAR 
+<img width="816" height="896" alt="Screenshot 2025-10-10 185152" src="https://github.com/user-attachments/assets/3a44a824-a287-46bb-bdb5-191393626fdf" />
+
+---
+## SAR - after downsampling (less pixles)
+<img width="1817" height="839" alt="Screenshot 2025-10-26 205804" src="https://github.com/user-attachments/assets/c137f6d5-8408-4818-b8ae-0e005f2004bb" />
+<img width="1429" height="778" alt="Screenshot 2025-10-26 205815" src="https://github.com/user-attachments/assets/797e0f6f-3c0d-4bd7-92c5-34573b975de4" />
+
+---
+
 ### Technologies Used
 
 | Layer | Tools & Frameworks | Description | Data / Model Source |
 |:------|:-------------------|:-------------|:--------------------|
 | **Frontend** | React.js, react-plotly.js | Interactive UI for real-time signal visualization and user controls. | — |
 | **Backend** | Flask (Python) | Handles signal processing, AI model inference, and data communication with the frontend. | — |
-| **AI / ML Models** | TensorFlow | Pretrained models for abnormality detection (ECG/EEG), Doppler parameter estimation, and sound classification. | [ECG model](https://github.com/Edoar-do/HuBERT-ECG),  [Drone Model](https://github.com/tensorflow/models/tree/master/research/audioset/yamnet), EEG model using `CSP` and `classifier`|
-| **Data Formats** | CSV | Supported formats for signal input/output. | [PhysioNet_ecg dataset](https://physionet.org/content/ptb-xl/1.0.3/), [Drones dataset](https://github.com/saraalemadi/DroneAudioDataset), [Car_sound dataset](https://slobodan.ucg.ac.me/science/vse/),EEG_dataset from brainlat |
+| **AI / ML Models** | TensorFlow | Pretrained models for abnormality detection (ECG/EEG), Doppler parameter estimation, and sound classification. | [ECG model](https://zenodo.org/records/3765717),  [Drone Model](https://github.com/tensorflow/models/tree/master/research/audioset/yamnet), EEG model using `CSP` and `classifier`,[Gender_classification_model](https://huggingface.co/JaesungHuh/voice-gender-classifier)
+| **Sampling** | Scipy.Signals | — | — |
+| **Anti-Aliasing** | VoiceFixer lib | — |— |
+| **Data** | CSV , .wav | Supported formats for signal input/output. | [PhysioNet_ecg dataset](https://physionet.org/content/ptb-xl/1.0.3/), [Drones dataset](https://github.com/saraalemadi/DroneAudioDataset), [Car_sound dataset](https://slobodan.ucg.ac.me/science/vse/),EEG_dataset from brainlat |
 
----
+
+
 
 ## 👥 Contributors
 | [Nayera Sherif](https://github.com/Nayera5) | [Nada Hesham](https://github.com/Nada-Hesham249) | [Shahd Ayman](https://github.com/Shahd-Ayman5) | [Nada Hassan](https://github.com/Nadahassan147) |
 |-------------------------------|---------------------------|-----------------------------------|-------------------------------|
 
 
-
-
-
----
