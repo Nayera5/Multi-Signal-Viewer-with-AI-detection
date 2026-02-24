@@ -3,7 +3,7 @@ import { useState } from "react";
 import "./CSS_files/sound.css";
 import { FaCar,FaArrowLeft } from "react-icons/fa";
 import { MdAudiotrack } from "react-icons/md";
-import { GiDeliveryDrone,GiRadarSweep } from "react-icons/gi";
+import { GiDeliveryDrone,GiHumanCannonball,GiHumanEar,GiHumanPyramid,GiHumanTarget,GiRadarSweep } from "react-icons/gi";
 
 
 function Sound() {
@@ -67,6 +67,19 @@ function Sound() {
               <GiRadarSweep size={70} />
             </div>
             <h2 className="sound-card-title">SAR</h2>
+            <div className="sound-card-stats-single">
+              <div className="stat-item">
+                <span className="stat-value">Analysis</span>
+                <span className="stat-label">Mode</span>
+              </div>
+            </div>
+          </div>
+
+        <div className="sound-signal-card car-card" onClick={() => navigate("/Speech")}>
+            <div className="sound-card-icon">
+              <GiHumanEar size={70} />
+            </div>
+            <h2 className="sound-card-title">Speech</h2>
             <div className="sound-card-stats-single">
               <div className="stat-item">
                 <span className="stat-value">Analysis</span>

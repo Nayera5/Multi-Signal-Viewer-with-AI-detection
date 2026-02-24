@@ -62,7 +62,7 @@ def restore_audio():
     input_path = "temp_input.wav"
     uploaded_file.save(input_path)
 
-    buffer= restore_and_stream(input_path, mode=0, use_cuda=False)
+    buffer, sr = restore_and_stream(input_path, mode=0, use_cuda=False)
 
     os.remove(input_path)
 

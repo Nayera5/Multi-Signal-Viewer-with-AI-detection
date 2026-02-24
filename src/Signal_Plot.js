@@ -17,7 +17,6 @@ const generatePolarPlotData = (leads, data, getColorForLead) => {
   });
 };
     
-
 // Recurrence Plot Component
 export const RecurrencePlot = ({ recurrenceData, themeColor, signalType }) => {
   if (!recurrenceData) return null;
@@ -116,10 +115,10 @@ export const MultiChannelLinePlot = ({ leads, getVisibleDataForLead, getColorFor
             showgrid: true,
             gridcolor: "#2d4a22",
             gridwidth: 0.5,
-            title: "Time (seconds)",
-            showticklabels: true,
+            title: "",
+            showticklabels: false,
             autorange: true,
-            zeroline: true,
+            zeroline: false,
             showline: false
           },
           yaxis: { 
@@ -231,8 +230,8 @@ export const SingleChannelLinePlot = ({ leadName, getVisibleDataForLead, getColo
           showgrid: true,
           gridcolor: "#2d4a22",
           gridwidth: 0.5,
-          title: "Time (seconds)",
-          showticklabels: true,
+          title: "",
+          showticklabels: false,
           autorange: true,
           zeroline: false,
           showline: false

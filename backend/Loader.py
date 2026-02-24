@@ -12,8 +12,10 @@ class SignalLoader:
     def get_time_column(self):
         if self.df is None:
             self.load_data()
+
         first_col = self.df.columns[0]
         values = self.df[first_col].values
+
         if pd.api.types.is_numeric_dtype(values) and (values >= 0).all():
             return first_col
         else:
@@ -22,12 +24,12 @@ class SignalLoader:
             self.df.insert(0, "time", [i * step for i in range(n)])
             return "time" 
 
-
     def get_leads(self):
         if self.df is None:
             self.load_data()
         time_col = self.get_time_column()
         return [col for col in self.df.columns if col != time_col]
+
 
 
     def get_chunk(self, start_idx=0, chunk_size=500, leads=None):

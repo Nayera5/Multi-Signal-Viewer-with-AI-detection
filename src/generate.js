@@ -5,17 +5,22 @@ import { FaPlay, FaStop } from "react-icons/fa";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import "./CSS_files/home.css";
 import "./CSS_files/generate.css"; // استدعاء ملف التنسيقات
+import { processAudioToWav } from "./Sound_Downsampling";
 
 function Generate() {
   const [baseFreq, setBaseFreq] = useState(120);
   const [speedKmh, setSpeedKmh] = useState(100);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [targetRate, setTargetRate] = useState(3000); // slider-controlled downsample rate
   const [error, setError] = useState("");
   const [analysisData, setAnalysisData] = useState(null);
   const audioContextRef = useRef(null);
   const audioChunksRef = useRef([]);
   const mediaRecorderRef = useRef(null);
+
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+
 
   const playSound = () => {
     const freq = parseFloat(baseFreq);
@@ -53,7 +58,15 @@ function Generate() {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        await sendToBackend(audioBlob);
+
+        // try to downsample to the user-selected targetRate using the shared utility
+        try {
+          const wavBlob = await processAudioToWav(audioBlob, targetRate);
+          await sendToBackend(wavBlob);
+        } catch (err) {
+          console.warn('Downsampling failed, sending original blob:', err);
+          await sendToBackend(audioBlob);
+        }
       };
 
       mediaRecorder.start();
@@ -140,7 +153,7 @@ function Generate() {
     formData.append("file", audioBlob, "generated_audio.webm");
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/analyze_generated_audio", {
+      const res = await fetch(`${apiBaseUrl}${process.env.REACT_APP_CAR_GENERATE_ENDPOINT}`, {
         method: "POST",
         body: formData,
       });
@@ -240,6 +253,25 @@ function Generate() {
                       disabled={isPlaying}
                     />
                     <small>Range: 10-200 km/h</small>
+                  </div>
+                  <div className="input-group">
+                    <label>Downsample Rate (Hz):</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <input
+                        type="range"
+                        min={3000}
+                        max={48000}
+                        step={10}
+                        value={targetRate}
+                        onChange={(e) => setTargetRate(parseInt(e.target.value, 10))}
+                        disabled={isPlaying}
+                        style={{ flex: 1 }}
+                      />
+                      <div style={{ width: 90, textAlign: 'right', color: '#cfc6ff' }}>
+                        <strong>{targetRate} Hz</strong>
+                      </div>
+                    </div>
+                    <small>Lower rates emulate aliasing / small-sensor capture</small>
                   </div>
                 </div>
 

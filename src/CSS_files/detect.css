@@ -1,0 +1,163 @@
+.det {
+  background: #000000; /* pure black like other pages */
+  min-height: 100vh;
+  color: #e6e6ef;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.car-audio-player {
+  margin: 12px auto;
+  display: block;
+  width: calc(100% - 120px);
+  max-width: 900px;
+}
+
+/* auto detect banner */
+.car-auto-detect-banner {
+  max-width: 1100px;
+  margin: 10px auto 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.01);
+  border: 1px solid rgba(255,255,255,0.02);
+  text-align: center;
+}
+
+.car-btn-auto-detect {
+  background: linear-gradient(135deg, #a46bf0 0%, #6a1b9a 100%);
+  color: white;
+  padding: 12px 26px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 6px 18px rgba(90,40,160,0.18);
+}
+
+.car-btn-auto-detect:hover { transform: translateY(-3px); }
+
+.car-equation-note { font-size: 13px; color: #bdb7d9; margin-top: 8px; }
+
+/* calculator section */
+.car-calculator-section {
+  max-width: 1100px;
+  margin: 18px auto;
+  padding: 18px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+/* selection grid */
+.car-selection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.car-phase-card {
+  padding: 18px;
+  background: linear-gradient(180deg, #060606, #0a0a0a); /* darker card */
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+}
+
+.car-phase-card.car-phase-approach { border-left: 6px solid rgba(255,100,100,0.12); }
+.car-phase-card.car-phase-recede { border-left: 6px solid rgba(100,150,255,0.12); }
+
+.car-phase-title-red { color: #a46bf0; margin: 0 0 8px 0; }
+.car-phase-title-blue { color: #a46bf0; margin: 0 0 8px 0; }
+
+.car-phase-placeholder { color: #9aa0b4; font-style: italic; }
+
+.car-auto-label { color: #c9bfff; font-size: 13px; margin-top: 6px; }
+
+/* button group */
+.car-button-group { display:flex; gap:12px; }
+
+.car-btn-calculate { color:white; padding:12px 24px; border-radius:10px; font-weight:700; }
+.car-btn-calculate.car-btn-enabled { background: linear-gradient(135deg,#a46bf0 0%,#6a1b9a 100%); cursor:pointer; }
+.car-btn-calculate.car-btn-enabled:hover { transform: translateY(-3px); }
+.car-btn-calculate.car-btn-disabled { background:#3a3340; cursor:not-allowed; }
+
+.car-btn-reset { background: linear-gradient(135deg,#6a1b9a 0%,#6a1b9a 100%); color:white; padding:12px 24px; border-radius:10px; }
+
+.car-btn-reset:hover { transform: translateY(-3px); }
+
+/* results container */
+.car-results-container {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #070707, #030303);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.car-results-title { color:#c9bfff; margin-top:0; }
+
+.car-equations-box { margin-bottom:12px; }
+.car-equation { font-family: monospace; background: rgba(255,255,255,0.02); padding:8px; border-radius:6px; }
+
+/* result cards */
+.car-result-f0 { background: linear-gradient(180deg,#0d021d,#2b0a57); padding:16px; border-radius:8px; margin-bottom:12px; color:#a46bf0; }
+.car-result-heading-green { margin:0 0 8px 0; color:#ac91cf; }
+.car-result-value-green { font-size:20px; margin:0; color:#ac91cf; }
+.car-result-description { font-size:13px; color:#bfbad1; margin:6px 0 0 0; }
+.car-result-meta { font-size:12px; color:#a89fc0; margin:6px 0; font-family: monospace; }
+
+.car-result-velocity { background: linear-gradient(180deg,#0d021d,#2b0a57); padding:16px; border-radius:8px; color:#a46bf0; }
+.car-result-heading-orange { margin:0 0 8px 0; color:#ac91cf; }
+.car-result-value-orange { font-size:20px; margin:0; color:#ac91cf; }
+.car-result-value-kmh { font-size:16px; margin-top:6px; color:#a46bf0; }
+
+/* backend section */
+.car-backend-section { margin-top:18px; padding:14px; border-radius:10px; background: rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.02); }
+.car-backend-section h4 { color:#cfc6ff; margin-top:0; }
+.car-backend-section p { color:#d1cfff; }
+
+/* no data */
+.car-no-data { text-align:center; padding:28px; color:#9aa0b4; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .car-selection-grid { grid-template-columns: 1fr; }
+  .car-audio-player { width: calc(100% - 40px); }
+}
+
+/* Plotly container adjustments for dark background */
+.plot {
+  max-width: 1100px;
+  margin: 12px auto;
+  background: #000; /* ensure container is black */
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+}
+
+/* Plotly SVG/text styling: targets common Plotly output */
+.plot .main-svg, .plot svg {
+  background: transparent !important;
+}
+
+.plot .plotly .xy .xaxislayer-above .xtick text,
+.plot .plotly .xy .yaxislayer-above .ytick text,
+.plot .plotly .legend text,
+.plot .plotly .gtitle {
+  fill: #d8d3ff !important;
+}
+
+.plot .plotly .gridlayer line {
+  stroke: rgba(255,255,255,0.06) !important;
+}
+
+.plot .plotly .colorbar {
+  background: transparent !important;
+}
+
+/* Heatmap traces often render a colorbar and layer; make sure labels are readable */
+.plot .plotly .cbtext {
+  fill: #d8d3ff !important;
+}

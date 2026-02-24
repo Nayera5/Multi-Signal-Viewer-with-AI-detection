@@ -8,7 +8,7 @@ import Detect from "./detect";
 import Generate from "./generate";
 import SARViewer from "./sar";
 import Drone from "./drones";
-
+import Speech from "./speech";
 function App() {
   return (
     <Router>
@@ -22,7 +22,7 @@ function App() {
         <Route path="/generate" element={<Generate />} />
         <Route path="/sar" element={<SARViewer />} />
         <Route path="/drones" element={<Drone />} />
-
+        <Route path="/speech" element={<Speech />} />
       </Routes>
     </Router>
   );

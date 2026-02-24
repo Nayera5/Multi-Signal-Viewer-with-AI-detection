@@ -70,6 +70,7 @@ function SignalPage({
   const [downsampleFreq, setDownsampleFreq] = useState(maxfreq); 
   const [streamKey, setStreamKey] = useState(0);
   
+  // Get minimum frequency based on signal type
   const getMinFrequency = () => {
     if (signalType.toUpperCase() === "ECG") {
       return 100;
@@ -232,7 +233,7 @@ function SignalPage({
     }
   };
 //________________________________________________________________________________
-  const handleFileChange = async (e) => {
+  const handleFileChange = async (e) => {  // when user upload file
     const file = e.target.files[0];
     if (!file) return;
 
@@ -240,6 +241,7 @@ function SignalPage({
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
+    //reset data
     setData([]);
     setIsStreaming(false);
     setActiveChart(null);
@@ -305,6 +307,7 @@ function SignalPage({
     setActiveChart(chartType);
     setStreamKey(prev => prev + 1); // Force visualization remount
 
+    // Build the URL with the target frequency
     const streamUrl = `${apiBaseUrl}${streamEndpoint}?freq=${downsampleFreq}`;
     eventSourceRef.current = new EventSource(streamUrl);
 

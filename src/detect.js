@@ -1,29 +1,38 @@
-import "./CSS_files/eeg.css";
+import "./CSS_files/detect.css";
 import { useNavigate } from "react-router-dom";
 import { FaArrowCircleUp } from "react-icons/fa";
 import { HiOutlineLockClosed } from "react-icons/hi2";
 import { LuAudioWaveform } from "react-icons/lu";
+import { MdSpeed } from "react-icons/md";
 import { useState, useRef, useEffect } from "react";
 import Plot from "react-plotly.js";
+import { processAudioToWav, decodeAudioFile } from './Sound_Downsampling.js';
 
-function Car() {
+function Detect() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [showWave, setShowWave] = useState(false);
   const [currentVelocity, setCurrentVelocity] = useState(0);
   
-  // للنقاط المختارة
   const [fApproach, setFApproach] = useState(null);
   const [fRecede, setFRecede] = useState(null);
   const [timeApproach, setTimeApproach] = useState(null);
   const [timeRecede, setTimeRecede] = useState(null);
   
-  // النتائج المحسوبة
   const [f0Calculated, setF0Calculated] = useState(null);
   const [velocityCalculated, setVelocityCalculated] = useState(null);
   
-  const [selectionMode, setSelectionMode] = useState("approach");
+  // Downsampling states
+  const [showDownsampling, setShowDownsampling] = useState(false);
+  const [sampleRate, setSampleRate] = useState(48000);
+  const [originalRate, setOriginalRate] = useState(48000);
+  const [originalFile, setOriginalFile] = useState(null);
+  const [processedAudio, setProcessedAudio] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   const audioRef = useRef(null);
+
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -32,35 +41,86 @@ function Car() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
+    setOriginalFile(file);
+    setIsProcessing(true);
 
     try {
-      console.log("Uploading file:", file.name);
-      const res = await fetch("http://127.0.0.1:5000/upload_car", {
-        method: "POST",
-        body: formData,
-      });
+      // Get original sample rate
+      const rate = await decodeAudioFile(file);
+      console.log("Original sample rate:", rate);
+      setOriginalRate(rate);
+      setSampleRate(rate);
 
-      if (!res.ok) {
-        console.error("Upload failed with status:", res.status);
-        throw new Error("Failed to upload file");
-      }
+      // Process audio to WAV with original rate
+      const wavBlob = await processAudioToWav(file, rate);
+      setProcessedAudio(wavBlob);
 
-      const json = await res.json();
-      console.log("Received data from backend:", json);
-      setData(json);
-      audioRef.current.src = URL.createObjectURL(file);
-      console.log("Audio source set:", audioRef.current.src);
+      // Upload to backend
+      await uploadToBackend(wavBlob);
+
+      // Set audio source
+      audioRef.current.src = URL.createObjectURL(wavBlob);
+      console.log("Audio loaded successfully");
     } catch (error) {
       console.error("Error uploading file:", error);
       alert("Failed to upload file. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const uploadToBackend = async (audioBlob) => {
+    const formData = new FormData();
+    formData.append("file", audioBlob, "audio.wav");
+
+    console.log("Uploading to backend...");
+    const res = await fetch(`${apiBaseUrl}${process.env.REACT_APP_DETECTCAR}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      console.error("Upload failed with status:", res.status);
+      throw new Error("Failed to upload file");
+    }
+
+    const json = await res.json();
+    console.log("Received data from backend:", json);
+    setData(json);
+  };
+
+  const handleSampleRateChange = async (e) => {
+    const newRate = parseInt(e.target.value);
+    setSampleRate(newRate);
+
+    if (originalFile && !isProcessing) {
+      setIsProcessing(true);
+      try {
+        console.log(`Resampling to ${newRate} Hz...`);
+        
+        // Resample audio
+        const wavBlob = await processAudioToWav(originalFile, newRate);
+        setProcessedAudio(wavBlob);
+
+        // Upload resampled audio to backend
+        await uploadToBackend(wavBlob);
+
+        // Update audio player
+        audioRef.current.src = URL.createObjectURL(wavBlob);
+        
+        console.log(`Successfully resampled to ${newRate} Hz`);
+      } catch (err) {
+        console.error('Error resampling:', err);
+        alert('Failed to resample audio');
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
   const handleWave = () => {
     if (!data) {
-      console.error("No data available to display graph");
+      console.error("No data available to display spectrogram");
       alert("No data available. Please upload a file first.");
       return;
     }
@@ -68,7 +128,7 @@ function Car() {
       console.error("Audio reference is not available");
       return;
     }
-    console.log("Attempting to play audio and show graph");
+    console.log("Attempting to play audio and show spectrogram");
     setShowWave(true);
     audioRef.current.play().catch((error) => {
       console.error("Error playing audio:", error);
@@ -76,58 +136,68 @@ function Car() {
     });
   };
 
-  // معالج الضغط على الـ Frequency-Time graph
-  const handleFrequencyPlotClick = (event) => {
-    if (event.points && event.points.length > 0) {
-      const point = event.points[0];
-      const freq = point.y;
-      const time = point.x;
-      
-      if (selectionMode === "approach") {
-        setFApproach(freq);
-        setTimeApproach(time);
-        console.log(`Approach frequency selected: ${freq.toFixed(2)} Hz at ${time.toFixed(2)}s`);
-        alert(`✅ Approach frequency selected: ${freq.toFixed(2)} Hz\n\nNow select the RECEDE frequency (lower point after the car passes)`);
-        setSelectionMode("recede");
-      } else {
-        setFRecede(freq);
-        setTimeRecede(time);
-        console.log(`Recede frequency selected: ${freq.toFixed(2)} Hz at ${time.toFixed(2)}s`);
-        alert(`✅ Recede frequency selected: ${freq.toFixed(2)} Hz\n\nNow click "Calculate" button!`);
-        setSelectionMode("approach");
-      }
-    }
-  };
-
-  // حساب f₀ والسرعة
-  const calculateDopplerParameters = () => {
-    if (!fApproach || !fRecede) {
-      alert("Please select both APPROACH and RECEDE frequencies from the graph!");
+  const autoDetectFrequencies = () => {
+    if (!data || !data.frequencies) {
+      alert("No data available for automatic detection!");
       return;
     }
 
-    const c = 343; // سرعة الصوت m/s
+    const frequencies = data.frequencies;
+    const times = data.times;
+    const totalLength = frequencies.length;
+
+    // ignore first and last 15% of data to avoid noise
+    const startIndex = Math.floor(totalLength * 0.15);
+    const endIndex = Math.floor(totalLength * 0.85);
+    const validFreqs = frequencies.slice(startIndex, endIndex);
+    const validTimes = times.slice(startIndex, endIndex);
+
+    // using 2nd and 98th percentiles to avoid outliers
+    const sortedFreqs = [...validFreqs].sort((a, b) => a - b);
+    const percentile98Index = Math.floor(sortedFreqs.length * 0.98);
+    const percentile2Index = Math.floor(sortedFreqs.length * 0.02);
     
-    // حساب f₀ (التردد الأصلي)
-    const f0 = (fApproach + fRecede) / 2;
+    const maxFreq = sortedFreqs[percentile98Index];
+    const minFreq = sortedFreqs[percentile2Index];
+
     
-    // حساب السرعة من معادلة Doppler
-    const v = c * (fApproach - fRecede) / (fApproach + fRecede);
+    const maxFreqIndex = validFreqs.findIndex(f => Math.abs(f - maxFreq) < 0.01) + startIndex;
+    const minFreqIndex = validFreqs.findIndex(f => Math.abs(f - minFreq) < 0.01) + startIndex;
+
+    // update state
+    setFApproach(maxFreq);
+    setTimeApproach(times[maxFreqIndex]);
+    setFRecede(minFreq);
+    setTimeRecede(times[minFreqIndex]);
+
+    console.log(`Auto-detected: Approach = ${maxFreq.toFixed(2)} Hz at ${times[maxFreqIndex].toFixed(2)}s`);
+    console.log(`Auto-detected: Recede = ${minFreq.toFixed(2)} Hz at ${times[minFreqIndex].toFixed(2)}s`);
+
+    const c = 343; // m/s
+    const f0 = Math.sqrt(maxFreq * minFreq); 
+    const v = c * (maxFreq - minFreq) / (maxFreq + minFreq);
     
     setF0Calculated(f0);
     setVelocityCalculated(v);
     
     console.log(`Calculated: f₀ = ${f0.toFixed(2)} Hz, v = ${v.toFixed(2)} m/s`);
+    console.log(`Frequency difference: ${(maxFreq - minFreq).toFixed(2)} Hz`);
+    console.log(`Ratio: ${(maxFreq / minFreq).toFixed(4)}`);
   };
 
-  const resetSelections = () => {
-    setFApproach(null);
-    setFRecede(null);
-    setTimeApproach(null);
-    setTimeRecede(null);
-    setF0Calculated(null);
-    setVelocityCalculated(null);
-    setSelectionMode("approach");
+  const downloadAudio = () => {
+    if (!processedAudio) {
+      alert('No processed audio to download');
+      return;
+    }
+    const url = URL.createObjectURL(processedAudio);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `doppler_downsampled_${sampleRate}Hz.wav`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -161,7 +231,7 @@ function Car() {
   }, [data]);
 
   return (
-    <div className="eeg">
+    <div className="det">
       <div className="icons">
         <span className="icon">
           <label htmlFor="fileUpload">
@@ -170,7 +240,7 @@ function Car() {
           <input
             id="fileUpload"
             type="file"
-            accept=".wav"
+            accept=".wav,audio/*"
             style={{ display: "none" }}
             onChange={handleUpload}
           />
@@ -181,395 +251,300 @@ function Car() {
         <span className="icon" onClick={handleWave}>
           <LuAudioWaveform size={30} color="purple" />
         </span>
+        <span 
+          className="icon" 
+          onClick={() => setShowDownsampling(!showDownsampling)}
+          title="Toggle Downsampling Controls"
+        >
+          <MdSpeed size={30} color="purple" />
+        </span>
       </div>
 
-      <h1>Car Page - Doppler Effect Analysis</h1>
-      <audio ref={audioRef} controls style={{ margin: "10px 0" }} />
+      <h1>Doppler Effect Analysis</h1>
+      
+      {isProcessing && (
+        <div style={{ color: 'purple', padding: '10px', textAlign: 'center' }}>
+          ⏳ Processing audio...
+        </div>
+      )}
+
+      {/* Downsampling Section */}
+      {showDownsampling && originalFile && (
+        <div className="car-downsampling-section" style={{
+          background: 'linear-gradient(135deg, rgba(128, 0, 128, 0.15) 0%, rgba(75, 0, 130, 0.15) 100%)',
+          padding: '25px',
+          borderRadius: '15px',
+          margin: '20px 0',
+          border: '2px solid purple',
+          boxShadow: '0 4px 15px rgba(128, 0, 128, 0.2)'
+        }}>
+          <h3 style={{ color: 'purple', marginBottom: '20px', textAlign: 'center' }}>
+            🎚️ Audio Downsampling Controls
+          </h3>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '15px',
+            marginBottom: '25px',
+            padding: '15px',
+            background: 'rgba(255, 255, 255, 0.5)',
+            borderRadius: '10px'
+          }}>
+            <div>
+              <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                Original Sample Rate:
+              </p>
+              <p style={{ margin: '5px 0', fontSize: '20px', fontWeight: 'bold', color: 'purple' }}>
+                {originalRate} Hz
+              </p>
+            </div>
+            <div>
+              <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+                Current Sample Rate:
+              </p>
+              <p style={{ margin: '5px 0', fontSize: '20px', fontWeight: 'bold', color: 'green' }}>
+                {sampleRate} Hz
+              </p>
+            </div>
+          </div>
+          
+          <div style={{ margin: '25px 0' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '10px', 
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: 'purple'
+            }}>
+              Adjust Sample Rate: {sampleRate} Hz
+            </label>
+            <input
+              type="range"
+              min="3000"
+              max={originalRate}
+              step="1000"
+              value={sampleRate}
+              onChange={handleSampleRateChange}
+              disabled={isProcessing}
+              style={{ 
+                width: '100%', 
+                height: '8px',
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
+                accentColor: 'purple'
+              }}
+            />
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              marginTop: '5px',
+              fontSize: '12px',
+              color: '#888'
+            }}>
+              <span>3000 Hz</span>
+              <span>{originalRate} Hz</span>
+            </div>
+          </div>
+
+          <div style={{ 
+            display: 'flex', 
+            gap: '10px', 
+            justifyContent: 'center',
+            marginTop: '20px' 
+          }}>
+            <button 
+              onClick={downloadAudio} 
+              disabled={!processedAudio || isProcessing}
+              style={{
+                background: processedAudio && !isProcessing ? 'purple' : '#ccc',
+                color: 'white',
+                padding: '12px 25px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: processedAudio && !isProcessing ? 'pointer' : 'not-allowed',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                transition: 'all 0.3s',
+                boxShadow: processedAudio && !isProcessing ? '0 4px 10px rgba(128, 0, 128, 0.3)' : 'none'
+              }}
+              onMouseOver={(e) => {
+                if (processedAudio && !isProcessing) {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 15px rgba(128, 0, 128, 0.4)';
+                }
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = processedAudio && !isProcessing ? '0 4px 10px rgba(128, 0, 128, 0.3)' : 'none';
+              }}
+            >
+              ⬇️ Download Downsampled Audio
+            </button>
+          </div>
+
+          {isProcessing && (
+            <div style={{
+              marginTop: '15px',
+              padding: '10px',
+              background: 'rgba(255, 193, 7, 0.2)',
+              borderRadius: '5px',
+              textAlign: 'center',
+              color: 'orange',
+              fontWeight: 'bold'
+            }}>
+              ⏳ Processing audio at {sampleRate} Hz...
+            </div>
+          )}
+        </div>
+      )}
+
+      <audio ref={audioRef} controls className="car-audio-player" />
       
       {showWave && data ? (
         <div>
-          <div style={{
-            background: "#e8f4f8",
-            padding: "15px",
-            borderRadius: "8px",
-            marginBottom: "20px",
-            border: "3px solid #4CAF50"
-          }}>
-            <p style={{ margin: 0, fontWeight: "bold", fontSize: "18px" }}>
-              📍 Next Step: Select <span style={{ 
-                color: selectionMode === "approach" ? "red" : "blue",
-                fontSize: "20px"
-              }}>
-                {selectionMode === "approach" ? "HIGHEST POINT (🔴 APPROACH)" : "LOWEST POINT (🔵 RECEDE)"}
-              </span> from the graph
-            </p>
+          <div className="car-auto-detect-banner">
+            <button onClick={autoDetectFrequencies} className="car-btn-auto-detect">
+              Frequency & Velocity
+            </button>
           </div>
-
-          {/* Frequency-Time Graph */}
-          <div style={{ marginBottom: "30px" }}>
-            <h2 style={{ color: "purple", textAlign: "center" }}>
-              📈 Observed Frequency vs Time (Doppler Effect)
-            </h2>
-            <Plot
-              data={[
-                {
-                  x: data.times,
-                  y: data.frequencies,
-                  type: "scatter",
-                  mode: "lines+markers",
-                  line: {
-                    color: "purple",
-                    width: 4
-                  },
-                  marker: {
-                    size: 6,
-                    color: "purple"
-                  },
-                  name: "Observed Frequency",
-                  hovertemplate: "<b>Time:</b> %{x:.2f} s<br><b>Frequency:</b> %{y:.2f} Hz<extra></extra>"
-                },
-                // Approach marker
-                ...(fApproach ? [{
-                  x: [timeApproach],
-                  y: [fApproach],
-                  mode: "markers+text",
-                  marker: {
-                    color: "red",
-                    size: 25,
-                    symbol: "x",
-                    line: {
-                      color: "darkred",
-                      width: 3
-                    }
-                  },
-                  text: ["APPROACH"],
-                  textposition: "top center",
-                  textfont: {
-                    size: 14,
-                    color: "red",
-                    family: "Arial Black"
-                  },
-                  name: `Approach: ${fApproach.toFixed(2)} Hz`,
-                  showlegend: true
-                }] : []),
-                // Recede marker
-                ...(fRecede ? [{
-                  x: [timeRecede],
-                  y: [fRecede],
-                  mode: "markers+text",
-                  marker: {
-                    color: "blue",
-                    size: 25,
-                    symbol: "x",
-                    line: {
-                      color: "darkblue",
-                      width: 3
-                    }
-                  },
-                  text: ["RECEDE"],
-                  textposition: "bottom center",
-                  textfont: {
-                    size: 14,
-                    color: "blue",
-                    family: "Arial Black"
-                  },
-                  name: `Recede: ${fRecede.toFixed(2)} Hz`,
-                  showlegend: true
-                }] : []),
-                // خط f₀ إذا تم حسابه
-                ...(f0Calculated ? [{
-                  x: [data.times[0], data.times[data.times.length - 1]],
-                  y: [f0Calculated, f0Calculated],
-                  mode: "lines",
-                  line: {
-                    color: "green",
-                    width: 3,
-                    dash: "dash"
-                  },
-                  name: `Source Frequency f₀ = ${f0Calculated.toFixed(2)} Hz`,
-                  showlegend: true
-                }] : []),
-              ]}
-              layout={{
-                title: {
-                  text: "Doppler Effect: Frequency Shift as Car Passes Observer",
-                  font: { size: 20, color: "purple", family: "Arial" }
-                },
-                xaxis: { 
-                  title: {
-                    text: "Time (seconds)",
-                    font: { size: 16, color: "#333" }
-                  },
-                  showgrid: true,
-                  gridcolor: "#e0e0e0",
-                  zeroline: false
-                },
-                yaxis: { 
-                  title: {
-                    text: "Observed Frequency (Hz)",
-                    font: { size: 16, color: "#333" }
-                  },
-                  showgrid: true,
-                  gridcolor: "#e0e0e0",
-                  zeroline: false
-                },
-                plot_bgcolor: "#fafafa",
-                paper_bgcolor: "white",
-                hovermode: "closest",
-                autosize: true,
-                margin: { t: 80, b: 70, l: 80, r: 50 },
-                legend: {
-                  x: 0.02,
-                  y: 0.98,
-                  bgcolor: "rgba(255,255,255,0.9)",
-                  bordercolor: "#333",
-                  borderwidth: 1
+          
+          <Plot className="plot"
+            data={[
+              {
+                z: data.spectrogram,
+                x: data.times,
+                y: data.freq_axis,
+                type: "heatmap",
+                colorscale: "Jet",
+                colorbar: {
+                  title: "dB",
+                  titleside: "right"
                 }
-              }}
-              style={{ width: "100%", height: "550px" }}
-              config={{ responsive: true, displayModeBar: true }}
-              onClick={handleFrequencyPlotClick}
-            />
-          </div>
+              },
+              ...(fApproach ? [{
+                x: [timeApproach],
+                y: [fApproach],
+                mode: "markers",
+                marker: {
+                  color: "red",
+                  size: 15,
+                  symbol: "x"
+                },
+                name: "Approach",
+                showlegend: true
+              }] : []),
+              ...(fRecede ? [{
+                x: [timeRecede],
+                y: [fRecede],
+                mode: "markers",
+                marker: {
+                  color: "blue",
+                  size: 15,
+                  symbol: "x"
+                },
+                name: "Recede",
+                showlegend: true
+              }] : []),
+            ]}
+            layout={{
+              title: `Spectrogram - Sample Rate: ${sampleRate} Hz`,
+              xaxis: { 
+                title: "Time (s)", 
+                range: [0, data.times[data.times.length - 1]],
+                showgrid: true
+              },
+              yaxis: { 
+                title: "Frequency (Hz)",
+                showgrid: true
+              },
+              autosize: true,
+              margin: { t: 50, b: 50, l: 60, r: 60 }
+            }}
+            style={{ width: "100%", height: "500px" }}
+            config={{ responsive: true }}
+          />
 
-          {/* Calculator Section */}
-          <div style={{ 
-            background: "linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)", 
-            padding: "25px", 
-            borderRadius: "12px", 
-            marginTop: "20px",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
-          }}>
-            <h2 style={{ color: "purple", textAlign: "center", marginTop: 0 }}>
-              🚗 Doppler Effect Calculator
-            </h2>
+          <div className="car-calculator-section">
             
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "1fr 1fr", 
-              gap: "20px",
-              marginBottom: "20px" 
-            }}>
-              <div style={{ 
-                padding: "20px", 
-                background: fApproach ? "#ffebee" : "white",
-                borderRadius: "10px",
-                border: "4px solid red",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}>
-                <h3 style={{ color: "red", margin: "0 0 15px 0", textAlign: "center" }}>
-                  🔴 Approach Phase
-                </h3>
+            <div className="car-selection-grid">
+              <div className={`car-phase-card ${fApproach ? 'car-phase-approach' : ''}`}>
+                <h4 className="car-phase-title-red">Approach (Car Coming)</h4>
                 {fApproach ? (
                   <>
-                    <p style={{ fontSize: "24px", margin: "10px 0", textAlign: "center", color: "red" }}>
-                      <b>{fApproach.toFixed(2)} Hz</b>
-                    </p>
-                    <p style={{ color: "#666", textAlign: "center" }}>
-                      at <b>{timeApproach.toFixed(2)}</b> seconds
-                    </p>
-                    <p style={{ fontSize: "12px", color: "#999", textAlign: "center", marginTop: "10px" }}>
-                      (Car coming towards observer)
-                    </p>
+                    <p><b>f_approach:</b> {fApproach.toFixed(2)} Hz</p>
+                    <p><b>Time:</b> {timeApproach.toFixed(2)} s</p>
                   </>
                 ) : (
-                  <p style={{ color: "#999", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>
-                    Click on the highest point<br/>in the graph above
-                  </p>
+                  <p className="car-phase-placeholder">Click Frequency & Velocity button above</p>
                 )}
               </div>
 
-              <div style={{ 
-                padding: "20px", 
-                background: fRecede ? "#e3f2fd" : "white",
-                borderRadius: "10px",
-                border: "4px solid blue",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-              }}>
-                <h3 style={{ color: "blue", margin: "0 0 15px 0", textAlign: "center" }}>
-                  🔵 Recede Phase
-                </h3>
+              <div className={`car-phase-card ${fRecede ? 'car-phase-recede' : ''}`}>
+                <h4 className="car-phase-title-blue">Recede (Car Leaving)</h4>
                 {fRecede ? (
                   <>
-                    <p style={{ fontSize: "24px", margin: "10px 0", textAlign: "center", color: "blue" }}>
-                      <b>{fRecede.toFixed(2)} Hz</b>
-                    </p>
-                    <p style={{ color: "#666", textAlign: "center" }}>
-                      at <b>{timeRecede.toFixed(2)}</b> seconds
-                    </p>
-                    <p style={{ fontSize: "12px", color: "#999", textAlign: "center", marginTop: "10px" }}>
-                      (Car moving away from observer)
-                    </p>
+                    <p><b>f_recede:</b> {fRecede.toFixed(2)} Hz</p>
+                    <p><b>Time:</b> {timeRecede.toFixed(2)} s</p>
                   </>
                 ) : (
-                  <p style={{ color: "#999", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>
-                    Click on the lowest point<br/>in the graph above
-                  </p>
+                  <p className="car-phase-placeholder">Click Frequency & Velocity button above</p>
                 )}
               </div>
-            </div>
-
-            <div style={{ display: "flex", gap: "15px", marginBottom: "25px" }}>
-              <button
-                onClick={calculateDopplerParameters}
-                disabled={!fApproach || !fRecede}
-                style={{
-                  background: (fApproach && fRecede) ? "linear-gradient(135deg, purple 0%, #6a1b9a 100%)" : "#ccc",
-                  color: "white",
-                  padding: "18px 35px",
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: (fApproach && fRecede) ? "pointer" : "not-allowed",
-                  fontWeight: "bold",
-                  fontSize: "20px",
-                  flex: 1,
-                  boxShadow: (fApproach && fRecede) ? "0 4px 6px rgba(0,0,0,0.2)" : "none",
-                  transition: "all 0.3s"
-                }}
-              >
-                🧮 Calculate f₀ & Velocity
-              </button>
-
-              <button
-                onClick={resetSelections}
-                style={{
-                  background: "linear-gradient(135deg, #ff5722 0%, #d84315 100%)",
-                  color: "white",
-                  padding: "18px 35px",
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                  boxShadow: "0 4px 6px rgba(0,0,0,0.2)"
-                }}
-              >
-                🔄 Reset All
-              </button>
             </div>
 
             {f0Calculated !== null && velocityCalculated !== null && (
-              <div style={{ 
-                marginTop: "25px", 
-                padding: "25px", 
-                background: "white", 
-                borderRadius: "12px",
-                border: "5px solid purple",
-                boxShadow: "0 6px 12px rgba(0,0,0,0.15)"
-              }}>
-                <h2 style={{ color: "purple", marginTop: 0, textAlign: "center" }}>
-                  📊 Calculation Results
-                </h2>
-                
-                <div style={{ 
-                  marginBottom: "25px",
-                  padding: "20px",
-                  background: "#f5f5f5",
-                  borderRadius: "8px"
-                }}>
-                  <p style={{ fontWeight: "bold", marginBottom: "15px", fontSize: "16px" }}>
-                    📐 Doppler Equations Used:
-                  </p>
-                  <div style={{ fontFamily: "Courier New", fontSize: "15px" }}>
-                    <p style={{ 
-                      background: "#e8f5e9", 
-                      padding: "12px", 
-                      borderRadius: "6px", 
-                      margin: "8px 0",
-                      borderLeft: "4px solid #4CAF50"
-                    }}>
-                      <b>f₀</b> = (f_approach + f_recede) / 2
-                    </p>
-                    <p style={{ 
-                      background: "#fff3e0", 
-                      padding: "12px", 
-                      borderRadius: "6px", 
-                      margin: "8px 0",
-                      borderLeft: "4px solid #FF9800"
-                    }}>
-                      <b>v</b> = c × (f_approach - f_recede) / (f_approach + f_recede)
-                    </p>
-                    <p style={{ fontSize: "13px", color: "#666", marginTop: "12px", fontFamily: "Arial" }}>
-                      where <b>c = 343 m/s</b> (speed of sound in air at 20°C)
-                    </p>
-                  </div>
-                </div>
+              <div className="car-results-container">
+                <h3 className="car-results-title">Calculation Results</h3>
 
-                <div style={{ 
-                  background: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)", 
-                  padding: "25px", 
-                  borderRadius: "10px",
-                  marginBottom: "20px",
-                  border: "3px solid #4CAF50",
-                  textAlign: "center"
-                }}>
-                  <h3 style={{ margin: "0 0 15px 0", color: "#2e7d32" }}>
-                    🎯 Source Frequency (f₀)
-                  </h3>
-                  <p style={{ fontSize: "42px", margin: "15px 0", color: "#1b5e20", fontWeight: "bold" }}>
-                    {f0Calculated.toFixed(2)} Hz
+                <div className="car-result-f0">
+                  <h4 className="car-result-heading-green">
+                    Source Frequency (f₀)
+                  </h4>
+                  <p className="car-result-value-green">
+                    <b>{f0Calculated.toFixed(2)} Hz</b>
                   </p>
-                  <p style={{ fontSize: "15px", color: "#666", margin: "10px 0" }}>
-                    This is the original frequency emitted by the car
+                  <p className="car-result-description">
+                    Original frequency of the car's sound
+                  </p>
+                  <p className="car-result-meta">
+                    f_approach: {fApproach.toFixed(2)} Hz | f_recede: {fRecede.toFixed(2)} Hz
+                  </p>
+                  <p className="car-result-meta">
+                    Δf: {(fApproach - fRecede).toFixed(2)} Hz
                   </p>
                 </div>
 
-                <div style={{ 
-                  background: "linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)", 
-                  padding: "25px", 
-                  borderRadius: "10px",
-                  border: "3px solid #FF9800",
-                  textAlign: "center"
-                }}>
-                  <h3 style={{ margin: "0 0 15px 0", color: "#e65100" }}>
-                    🚗 Car Velocity
-                  </h3>
-                  <p style={{ fontSize: "42px", margin: "15px 0", color: "#bf360c", fontWeight: "bold" }}>
-                    {velocityCalculated.toFixed(2)} m/s
+                <div className="car-result-velocity">
+                  <h4 className="car-result-heading-orange">
+                    Car Velocity
+                  </h4>
+                  <p className="car-result-value-orange">
+                    <b>{velocityCalculated.toFixed(2)} m/s</b>
                   </p>
-                  <p style={{ fontSize: "36px", margin: "15px 0", color: "#f57c00", fontWeight: "bold" }}>
-                    = {(velocityCalculated * 3.6).toFixed(2)} km/h
-                  </p>
-                  <p style={{ fontSize: "15px", color: "#666", margin: "10px 0" }}>
-                    Speed of the car passing by the observer
+                  <p className="car-result-value-kmh">
+                    = <b>{(velocityCalculated * 3.6).toFixed(2)} km/h</b>
                   </p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Backend Auto Calculations */}
-          <div style={{ 
-            marginTop: "25px",
-            padding: "20px",
-            background: "#fafafa",
-            borderRadius: "10px",
-            border: "2px solid #ddd"
-          }}>
-            <h4 style={{ color: "#666", marginTop: 0 }}>
-              🤖 Automatic Backend Calculations (For Comparison):
-            </h4>
-            <p style={{ fontSize: "16px" }}>
+          <div className="car-backend-section">
+            <h4>Backend Calculations (For Comparison):</h4>
+            <p>
               <b>Estimated Avg Velocity:</b> {data.estimated_velocity.toFixed(2)} m/s 
               ({(data.estimated_velocity * 3.6).toFixed(2)} km/h)
             </p>
-            <p id="liveVel" style={{ fontSize: "16px" }}>
+            <p id="liveVel">
               <b>Live Velocity:</b> {currentVelocity} m/s
             </p>
           </div>
         </div>
       ) : (
-        <div style={{ textAlign: "center", padding: "60px" }}>
-          <p style={{ fontSize: "20px", color: "#666" }}>
-            📁 No data available yet
-          </p>
-          <p style={{ fontSize: "16px", color: "#999" }}>
-            Please upload a .wav file and click the Wave icon to start analysis
-          </p>
-        </div>
+        <p className="car-no-data">No spectrogram data available. Please upload a file.</p>
       )}
     </div>
   );
 }
 
-export default Car;   
+export default Detect;

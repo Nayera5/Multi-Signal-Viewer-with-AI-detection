@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { CiHome } from "react-icons/ci";
 
-const apiBaseUrl=process.env.REACT_APP_API_BASE_URL
-
 function SARViewer() {
   const navigate = useNavigate();
   const [sarData, setSarData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [downsampleFactor, setDownsampleFactor] = useState(1);
+
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
 
 
   // Load SAR data automatically on component mount

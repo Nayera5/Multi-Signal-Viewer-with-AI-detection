@@ -1,3 +1,4 @@
+
 // Decode the uploaded file to get its original sample rate
 export async function decodeAudioFile(file) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -6,19 +7,13 @@ export async function decodeAudioFile(file) {
   return audioBuffer.sampleRate; // return original sample rate
 }
 
-/**
- * Takes an audio File, decodes it, downsamples it, and returns a WAV Blob.
- * @param {File} file - Input audio file
- * @param {number} targetRate - Target sample rate (default 48000 Hz)
- * @returns {Promise<Blob>} WAV Blob (downsampled)
- */
 
 export async function processAudioToWav(file, targetRate = 48000) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
   // Step 1: Decode file → AudioBuffer
   const arrayBuffer = await file.arrayBuffer();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);   // uncompressed, channels, samples...
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
   // Step 2: Downsample
   const oldRate = audioBuffer.sampleRate;
@@ -41,8 +36,7 @@ export async function processAudioToWav(file, targetRate = 48000) {
   }
 
   // Step 3: Convert to WAV Blob
-
-  const length = newBuffer.length * numChannels * 2 + 44;   // header+buffer
+  const length = newBuffer.length * numChannels * 2 + 44;
   const buffer = new ArrayBuffer(length);
   const view = new DataView(buffer);
   let pos = 0;
@@ -77,3 +71,5 @@ export async function processAudioToWav(file, targetRate = 48000) {
 
   return new Blob([buffer], { type: 'audio/wav' });
 }
+
+

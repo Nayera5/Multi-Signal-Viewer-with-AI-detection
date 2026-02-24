@@ -42,7 +42,6 @@ function Home() {
               <span className="feature-tag">Audio</span>
               <span className="feature-tag">Doppler</span>
               <span className="feature-tag">Spectrum</span>
-              
             </div>
           </div>
         </div>
