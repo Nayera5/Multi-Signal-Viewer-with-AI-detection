@@ -7,19 +7,29 @@
 > ## **Overview**
 
 The **Multi Signal Viewer** is an integrated web-based application for **multi-domain signal visualization, processing, and AI-assisted analysis**.
-It now includes a **unified adaptive sampling framework** applied across all supported domains — allowing users to control and analyze signal behavior under different sampling frequencies, while ensuring accuracy through built-in **anti-aliasing filters**.
+Including an **adaptive sampling framework** applied across all supported domains — allowing users to control and analyze signal behavior under different sampling frequencies, while ensuring accuracy through built-in **anti-aliasing filters**.
 
-The system supports real-time exploration, AI detection, and classification for **🫀 Medical**, **🔊 Acoustic and Speech Signals Viewer**, and **📡 Radiofrequency** signals, with newly added support for **human speech signals** and adaptive preprocessing.
+## **Included Modules:**
 
-## Downsampling control:
+#### 🫀 Medical Signals Viewer
 
-Added a **downsampling feature** that lets the user change the sampling frequency of the displayed signal using a slider. The slider accepts any target sampling frequency **less than the original sampling rate**.
+- Visualize multi or single-channel `ECG/EEG` signals and detect abnormalities using a pretrained `AI model`.
+
+#### 🗣️ Human Speech Signals Viewer.
+
+#### 🔊 Acoustic Signals Viewer
+
+- Vehicle-Passing Doppler Effect: simulate car sounds with controllable `velocity (v)` and `frequency (f)`; estimate both using an AI model from real recordings.
+- Drone Detection: detect the presence of drones or submarines among background sounds using an AI classifier.
+
+#### 📡 Radiofrequency Signals Viewer.
+
 
 ---
 
 ### 🏠 Home Page Preview
 
-<img width="1876" height="860" alt="Screenshot 2025-10-11 022524" src="https://github.com/user-attachments/assets/1053632c-122e-443c-be33-453c36f16971" />
+<img width="1800" height="843" alt="Screenshot 2025-10-04 141814" src="https://github.com/user-attachments/assets/171116fc-e470-4b4a-bd79-8bebc32e8be2" />
 
 ---
 
@@ -38,17 +48,23 @@ Added a **downsampling feature** that lets the user change the sampling frequenc
 
 ## **Behavior and UI**
 * When the user moves the slider, the viewer uses `scipy.signal` to automatically **resample** the signal to the selected frequency.
-    🔹*In simple terms:* this step removes the high-frequency parts of the signal and then reduces the number of samples so the new version looks the same but is smoother and slower.
+    - *In simple terms:* this step removes the high-frequency parts of the signal and then reduces the number of samples so the new version looks the same but is smoother and slower.
 * The new signal is then used both for display and for processing.
 * A small readout next to the slider shows the current target sampling frequency and the original sampling frequency.
 
 ## ECG
-https://github.com/user-attachments/assets/72720ea9-107b-4303-9d10-904569dfa5c2
+
+
+https://github.com/user-attachments/assets/1c07b41c-de51-44fc-8aa9-eb90b38cc7e2
+
 
 ## EEG
 
 
-https://github.com/user-attachments/assets/abb05cc4-ef02-4806-8a70-7ce30fc265aa
+
+https://github.com/user-attachments/assets/e18c512a-9fc7-4445-a8aa-12a1c7072d07
+
+
 
 ---
 ## Known issue: AI detection mismatch after downsampling
@@ -62,11 +78,11 @@ https://github.com/user-attachments/assets/abb05cc4-ef02-4806-8a70-7ce30fc265aa
 
 ## ECG
 ### after downsampling detects normal although the signal is for atrial fibrillation
-<img width="1907" height="876" alt="Screenshot 2025-10-26 205258" src="https://github.com/user-attachments/assets/86a2e8fd-0f50-40fb-916e-af62199ca164" />
+<img width="1907" height="876" alt="1" src="https://github.com/user-attachments/assets/05bc0806-8d99-478c-8ca3-c015833f1906" />
 
 ## EEG
 ### after downsampling detects another type of disease
-<img width="1886" height="889" alt="Screenshot 2025-10-26 205725" src="https://github.com/user-attachments/assets/ea7f14a9-820b-494c-92e1-fe411055ef6d" />
+<img width="1886" height="889" alt="2" src="https://github.com/user-attachments/assets/4cbe6668-f32f-4cdd-b691-2f7403ba6155" />
 
 ---
 
@@ -80,7 +96,9 @@ https://github.com/user-attachments/assets/abb05cc4-ef02-4806-8a70-7ce30fc265aa
 Speech samples are played, then downsampled using a slider that controls the sampling rate. The audio before and after downsampling reveal how lowering the sampling frequency affects speech clarity and introduces noise, showing the impact of sampling rate on human voice perception.
 
 
-https://github.com/user-attachments/assets/e09a10ea-5f7f-4e27-a444-dc9f81b4cd9a
+
+https://github.com/user-attachments/assets/fbf6d675-f033-46dd-a617-44b4a3ab8496
+
 
 ---
 # 3) Acoustic Signals Viewer
@@ -89,7 +107,10 @@ https://github.com/user-attachments/assets/e09a10ea-5f7f-4e27-a444-dc9f81b4cd9a
 
 This part focuses on detecting the frequency and speed of car sounds. The audio signals are downsampled to observe how reducing the sampling rate affects the sound characteristics. The spectrogram and the audio playback are displayed before and after downsampling to visualize and hear the changes in frequency content and clarity.
 
-https://github.com/user-attachments/assets/4103c3a5-1a06-4a0e-9e3a-e31e8b3e8367
+
+
+https://github.com/user-attachments/assets/1ee50ac2-09f5-49e9-afa8-c74881c5db9c
+
 
 ---
 ## 🚗 Car Sound Generation
@@ -97,7 +118,10 @@ https://github.com/user-attachments/assets/4103c3a5-1a06-4a0e-9e3a-e31e8b3e8367
 Car sounds are generated and played to demonstrate how downsampling impacts the quality of the audio. A slider is used to adjust the sampling rate, allowing users to notice how the sound becomes noisier or distorted at lower rates.
 
 
-https://github.com/user-attachments/assets/a07983a8-afff-48c0-88cc-ee5cef667ed5
+
+
+https://github.com/user-attachments/assets/694533f0-d509-453a-b13e-76dd605d09cf
+
 
 ---
 ## Drone Audio Classification
@@ -107,16 +131,18 @@ Users can upload or record a sound, and the system analyzes its acoustic feature
 ### New feature: Downsampling control 
 An interactive downsampling slider allows users to reduce the sampling rate of the audio. When downsampling is applied, important high-frequency features of the drone sound are lost — causing the model to misclassify the sound as non-drone.
 
-https://github.com/user-attachments/assets/3cab414f-03bc-4bac-b10a-2f9b2a8e4bbf
+
+https://github.com/user-attachments/assets/ca756676-23b6-4b24-ba1d-1c23e7754be4
+
 
 ---
-## SAR 
-<img width="816" height="896" alt="Screenshot 2025-10-10 185152" src="https://github.com/user-attachments/assets/3a44a824-a287-46bb-bdb5-191393626fdf" />
+## SAR
+
+<img width="816" height="896" alt="553214991-9f62939b-7d54-44ff-adac-5593bc688b0c" src="https://github.com/user-attachments/assets/b94009a1-c8d3-4ac0-8681-fedc07f48a6b" />
 
 ---
 ## SAR - after downsampling (less pixles)
 <img width="1817" height="839" alt="Screenshot 2025-10-26 205804" src="https://github.com/user-attachments/assets/c137f6d5-8408-4818-b8ae-0e005f2004bb" />
-<img width="1429" height="778" alt="Screenshot 2025-10-26 205815" src="https://github.com/user-attachments/assets/797e0f6f-3c0d-4bd7-92c5-34573b975de4" />
 
 ---
 
